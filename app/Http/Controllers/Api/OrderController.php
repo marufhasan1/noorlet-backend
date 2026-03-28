@@ -49,6 +49,7 @@ class OrderController extends Controller
             $subtotal += $lineTotal;
             $orderItems[] = [
                 'product_id'   => $product->id,
+                'seller_id'    => $product->seller_id,
                 'product_name' => $product->name,
                 'size'         => $item['size'] ?? null,
                 'color'        => $item['color'] ?? null,

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -11,19 +10,14 @@ class ProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with('category');
+        $query = Product::with(['category', 'media']);
 
-        // Filter by category slug
         if ($request->filled('category')) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $request->category));
         }
-
-        // Filter by subcategory
         if ($request->filled('subcategory')) {
             $query->where('subcategory', $request->subcategory);
         }
-
-        // Search by name or description
         if ($request->filled('search')) {
             $term = $request->search;
             $query->where(function ($q) use ($term) {
@@ -32,18 +26,12 @@ class ProductController extends Controller
                   ->orWhereJsonContains('tags', strtolower($term));
             });
         }
-
-        // Filter by badge
         if ($request->filled('badge')) {
             $query->where('badge', strtoupper($request->badge));
         }
-
-        // Filter by in_stock
         if ($request->boolean('in_stock')) {
             $query->where('in_stock', true);
         }
-
-        // Price range
         if ($request->filled('min_price')) {
             $query->where('price', '>=', $request->min_price);
         }
@@ -51,23 +39,38 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Sorting
-        $sort = $request->get('sort', 'id');
-        $dir  = $request->get('dir', 'asc');
-        $allowedSorts = ['price', 'name', 'rating', 'reviews', 'id'];
-        if (in_array($sort, $allowedSorts)) {
+        $sort = $request->input('sort', 'id');
+        $dir  = $request->input('dir', 'asc');
+        if (in_array($sort, ['price', 'name', 'rating', 'reviews', 'id'])) {
             $query->orderBy($sort, $dir === 'desc' ? 'desc' : 'asc');
         }
 
-        $products = $query->paginate($request->get('per_page', 20));
+        $products = $query->paginate($request->integer('per_page', 20));
+
+        $products->getCollection()->transform(function ($p) {
+            $arr = $p->toArray();
+            $arr['image'] = $p->getFirstMediaUrl('images', 'medium') ?: null;
+            $arr['thumb'] = $p->getFirstMediaUrl('images', 'thumb') ?: null;
+            return $arr;
+        });
 
         return response()->json($products);
     }
 
     public function show(string $id): JsonResponse
     {
-        $product = Product::with('category')->findOrFail($id);
+        $product = Product::with(['category', 'media'])->findOrFail($id);
 
-        return response()->json(['product' => $product]);
+        $data = $product->toArray();
+        $data['images'] = $product->getMedia('images')->map(fn($m) => [
+            'id'     => $m->id,
+            'url'    => $m->getUrl(),
+            'thumb'  => $m->getUrl('thumb'),
+            'medium' => $m->getUrl('medium'),
+        ])->values()->toArray();
+        $data['image']  = $product->getFirstMediaUrl('images', 'medium') ?: null;
+        $data['thumb']  = $product->getFirstMediaUrl('images', 'thumb') ?: null;
+
+        return response()->json(['product' => $data]);
     }
 }

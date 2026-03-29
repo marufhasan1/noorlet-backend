@@ -10,6 +10,12 @@ use App\Http\Controllers\Api\SellerOrderController;
 use App\Http\Controllers\Api\SellerProductController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\Api\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\AdminDashboardController;
+use App\Http\Controllers\Api\Admin\AdminUserController;
+use App\Http\Controllers\Api\Admin\AdminOrderController;
+use App\Http\Controllers\Api\Admin\AdminCategoryController;
+use App\Http\Controllers\Api\Admin\AdminSellerController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Public routes ───────────────────────────────────────────────────────────
@@ -60,6 +66,41 @@ Route::get('stores/{slug}/products', [StoreController::class, 'products']);
 
 // Seller registration (requires auth only)
 Route::middleware('auth:sanctum')->post('seller/register', [SellerController::class, 'register']);
+
+// ─── Admin auth (public) ──────────────────────────────────────────────────────
+Route::prefix('admin/auth')->group(function () {
+    Route::post('login',  [AdminAuthController::class, 'login']);
+    Route::post('logout', [AdminAuthController::class, 'logout'])->middleware('auth:admin');
+    Route::get('user',    [AdminAuthController::class, 'user'])->middleware('auth:admin');
+});
+
+// ─── Admin routes (admin guard) ───────────────────────────────────────────────
+Route::middleware('auth:admin')->prefix('admin')->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index']);
+
+    // Users
+    Route::get('users',               [AdminUserController::class, 'index']);
+    Route::get('users/{user}',        [AdminUserController::class, 'show']);
+    Route::patch('users/{user}',      [AdminUserController::class, 'update']);
+    Route::delete('users/{user}',     [AdminUserController::class, 'destroy']);
+
+    // Orders
+    Route::get('orders',                          [AdminOrderController::class, 'index']);
+    Route::get('orders/{order}',                  [AdminOrderController::class, 'show']);
+    Route::patch('orders/{order}/status',         [AdminOrderController::class, 'updateStatus']);
+
+    // Categories
+    Route::get('categories',                      [AdminCategoryController::class, 'index']);
+    Route::post('categories',                     [AdminCategoryController::class, 'store']);
+    Route::patch('categories/{category}',         [AdminCategoryController::class, 'update']);
+    Route::delete('categories/{category}',        [AdminCategoryController::class, 'destroy']);
+
+    // Sellers / Agents
+    Route::get('sellers',                         [AdminSellerController::class, 'index']);
+    Route::get('sellers/{user}',                  [AdminSellerController::class, 'show']);
+    Route::patch('sellers/stores/{store}/status', [AdminSellerController::class, 'updateStoreStatus']);
+    Route::patch('sellers/{user}/revoke',         [AdminSellerController::class, 'revoke']);
+});
 
 // Seller routes (requires auth + seller role)
 Route::middleware(['auth:sanctum', 'seller'])->prefix('seller')->group(function () {

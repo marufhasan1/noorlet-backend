@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
@@ -27,7 +28,7 @@ Route::prefix('auth')->group(function () {
 });
 
 // Categories — public
-Route::get('categories', fn() => response()->json(\App\Models\Category::orderBy('name')->get()));
+Route::get('categories', [CategoryController::class, 'index']);
 
 // Products — public (no auth required)
 Route::get('products',     [ProductController::class, 'index']);

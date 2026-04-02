@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminCategoryController extends Controller
 {
@@ -19,8 +20,13 @@ class AdminCategoryController extends Controller
         $data = $request->validate([
             'name'        => ['required', 'string', 'max:255', 'unique:categories,name'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'image'       => ['nullable', 'string', 'max:500'],
+            'icon'        => ['nullable', 'string', 'max:100'],
+            'icon_color'  => ['nullable', 'string', 'max:100'],
+            'icon_bg'     => ['nullable', 'string', 'max:100'],
+            'is_featured' => ['boolean'],
         ]);
+
+        $data['slug'] = $this->uniqueSlug(Str::slug($data['name']));
 
         $category = Category::create($data);
 
@@ -32,8 +38,15 @@ class AdminCategoryController extends Controller
         $data = $request->validate([
             'name'        => ['sometimes', 'required', 'string', 'max:255', 'unique:categories,name,' . $category->id],
             'description' => ['nullable', 'string', 'max:1000'],
-            'image'       => ['nullable', 'string', 'max:500'],
+            'icon'        => ['nullable', 'string', 'max:100'],
+            'icon_color'  => ['nullable', 'string', 'max:100'],
+            'icon_bg'     => ['nullable', 'string', 'max:100'],
+            'is_featured' => ['boolean'],
         ]);
+
+        if (isset($data['name']) && $data['name'] !== $category->name) {
+            $data['slug'] = $this->uniqueSlug(Str::slug($data['name']), $category->id);
+        }
 
         $category->update($data);
 
@@ -44,5 +57,15 @@ class AdminCategoryController extends Controller
     {
         $category->delete();
         return response()->json(['message' => 'Category deleted.']);
+    }
+
+    private function uniqueSlug(string $base, ?int $excludeId = null): string
+    {
+        $slug = $base;
+        $i    = 1;
+        while (Category::where('slug', $slug)->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))->exists()) {
+            $slug = $base . '-' . $i++;
+        }
+        return $slug;
     }
 }

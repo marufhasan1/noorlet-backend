@@ -77,6 +77,9 @@ class SellerProductController extends Controller
                 'sku'       => 'SKU-' . strtoupper(Str::random(8)),
                 'rating'    => 0,
                 'reviews'   => 0,
+                'colors'    => $data['colors'] ?? [],
+                'sizes'     => $data['sizes'] ?? [],
+                'tags'      => $data['tags'] ?? [],
             ]
         ));
 

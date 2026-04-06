@@ -57,8 +57,10 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    public function show(string $id): JsonResponse
+    public function show(string $slug): JsonResponse
     {
+        // Accept both plain ID and SEO slug format "name_id"
+        $id = (int) (str_contains($slug, '_') ? substr(strrchr($slug, '_'), 1) : $slug);
         $product = Product::with(['category', 'media'])->findOrFail($id);
 
         $data = $product->toArray();

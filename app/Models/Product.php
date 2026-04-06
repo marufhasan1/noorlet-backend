@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -19,6 +20,13 @@ class Product extends Model implements HasMedia
         'related_ids', 'color1', 'color2', 'icon_class', 'icon_color',
         'in_stock', 'rating', 'reviews',
     ];
+
+    protected $appends = ['url_slug'];
+
+    public function getUrlSlugAttribute(): string
+    {
+        return Str::slug($this->name) . '_' . $this->id;
+    }
 
     protected $casts = [
         'details'        => 'array',

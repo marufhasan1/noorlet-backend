@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SellerController extends Controller
@@ -85,6 +86,7 @@ class SellerController extends Controller
 
         $data = $request->validate([
             'name'        => ['sometimes', 'required', 'string', 'max:255'],
+            'slug'        => ['sometimes', 'required', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'description' => ['nullable', 'string', 'max:1000'],
             'email'       => ['nullable', 'email'],
             'phone'       => ['nullable', 'string', 'max:30'],
@@ -93,7 +95,61 @@ class SellerController extends Controller
             'country'     => ['nullable', 'string', 'max:100'],
         ]);
 
+        if (isset($data['slug'])) {
+            $slug = Str::slug($data['slug']);
+            if (Store::where('slug', $slug)->where('id', '!=', $store->id)->exists()) {
+                return response()->json(['message' => 'This store ID is already taken.'], 422);
+            }
+            $data['slug'] = $slug;
+        }
+
         $store->update($data);
+
+        return response()->json(['store' => $store->fresh()]);
+    }
+
+    public function uploadLogo(Request $request): JsonResponse
+    {
+        $request->validate(['logo' => ['required', 'image', 'max:2048']]);
+        $store = $request->user()->store;
+
+        if ($store->logo) {
+            Storage::disk('public')->delete($store->logo);
+        }
+
+        $path = $request->file('logo')->store("stores/{$store->id}", 'public');
+        $store->update(['logo' => $path]);
+
+        return response()->json(['store' => $store->fresh(), 'url' => Storage::disk('public')->url($path)]);
+    }
+
+    public function uploadBanner(Request $request): JsonResponse
+    {
+        $request->validate(['banner' => ['required', 'image', 'max:5120']]);
+        $store = $request->user()->store;
+
+        if ($store->banner) {
+            Storage::disk('public')->delete($store->banner);
+        }
+
+        $path = $request->file('banner')->store("stores/{$store->id}", 'public');
+        $store->update(['banner' => $path]);
+
+        return response()->json(['store' => $store->fresh(), 'url' => Storage::disk('public')->url($path)]);
+    }
+
+    public function deleteImage(Request $request, string $type): JsonResponse
+    {
+        $store = $request->user()->store;
+
+        if (!in_array($type, ['logo', 'banner'])) {
+            return response()->json(['message' => 'Invalid image type.'], 422);
+        }
+
+        if ($store->{$type}) {
+            Storage::disk('public')->delete($store->{$type});
+            $store->update([$type => null]);
+        }
 
         return response()->json(['store' => $store->fresh()]);
     }

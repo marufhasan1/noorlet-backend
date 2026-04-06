@@ -106,8 +106,11 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 // Seller routes (requires auth + seller role)
 Route::middleware(['auth:sanctum', 'seller'])->prefix('seller')->group(function () {
     Route::get('dashboard',         [SellerController::class, 'dashboard']);
-    Route::get('store',             [SellerController::class, 'store']);
-    Route::patch('store',           [SellerController::class, 'updateStore']);
+    Route::get('store',                        [SellerController::class, 'store']);
+    Route::patch('store',                      [SellerController::class, 'updateStore']);
+    Route::post('store/logo',                  [SellerController::class, 'uploadLogo']);
+    Route::post('store/banner',                [SellerController::class, 'uploadBanner']);
+    Route::delete('store/images/{type}',       [SellerController::class, 'deleteImage']);
 
     Route::get('products',                             [SellerProductController::class, 'index']);
     Route::post('products',                            [SellerProductController::class, 'store']);

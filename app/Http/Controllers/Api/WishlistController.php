@@ -11,13 +11,21 @@ class WishlistController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $wishlist = $request->user()
+        $products = $request->user()
             ->wishlists()
-            ->with('product.category')
+            ->with('product.category', 'product.media')
             ->get()
-            ->pluck('product');
+            ->pluck('product')
+            ->filter()
+            ->map(function ($product) {
+                $data = $product->toArray();
+                $data['image'] = $product->getFirstMediaUrl('images', 'medium') ?: null;
+                $data['thumb'] = $product->getFirstMediaUrl('images', 'thumb') ?: null;
+                return $data;
+            })
+            ->values();
 
-        return response()->json(['wishlist' => $wishlist]);
+        return response()->json(['products' => $products]);
     }
 
     public function store(Request $request): JsonResponse

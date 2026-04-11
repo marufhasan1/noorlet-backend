@@ -17,7 +17,13 @@ use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminOrderController;
 use App\Http\Controllers\Api\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\Admin\AdminSellerController;
+use App\Http\Controllers\Api\Admin\AdminSettingsController;
+use App\Http\Controllers\Api\Admin\AdminBrandController;
 use Illuminate\Support\Facades\Route;
+
+// ─── Public CMS endpoints ─────────────────────────────────────────────────────
+Route::get('settings', [AdminSettingsController::class, 'index']);
+Route::get('brands',   [AdminBrandController::class, 'index']);
 
 // ─── Public routes ───────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
@@ -96,6 +102,19 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::patch('categories/{category}',         [AdminCategoryController::class, 'update']);
     Route::delete('categories/{category}',        [AdminCategoryController::class, 'destroy']);
 
+    // Settings
+    Route::get('settings',                         [AdminSettingsController::class, 'index']);
+    Route::patch('settings',                       [AdminSettingsController::class, 'update']);
+
+    // Brands (CMS)
+    Route::get('brands',                           [AdminBrandController::class, 'index']);
+    Route::post('brands',                          [AdminBrandController::class, 'store']);
+    Route::post('brands/reorder',                  [AdminBrandController::class, 'reorder']);
+    Route::patch('brands/{brand}',                 [AdminBrandController::class, 'update']);
+    Route::delete('brands/{brand}',                [AdminBrandController::class, 'destroy']);
+    Route::post('brands/{brand}/logo',             [AdminBrandController::class, 'uploadLogo']);
+    Route::delete('brands/{brand}/logo',           [AdminBrandController::class, 'deleteLogo']);
+
     // Sellers / Agents
     Route::get('sellers',                         [AdminSellerController::class, 'index']);
     Route::get('sellers/{user}',                  [AdminSellerController::class, 'show']);
@@ -121,5 +140,5 @@ Route::middleware(['auth:sanctum', 'seller'])->prefix('seller')->group(function 
     Route::delete('products/{product}/images/{media}', [SellerProductController::class, 'destroyImage']);
 
     Route::get('orders',            [SellerOrderController::class, 'index']);
-    Route::patch('orders/{orderItem}/status', [SellerOrderController::class, 'updateStatus']);
+    Route::patch('orders/{order}/status', [SellerOrderController::class, 'updateStatus']);
 });

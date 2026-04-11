@@ -37,30 +37,45 @@ class SellerProductController extends Controller
         return response()->json($products);
     }
 
+    private static function extractYoutubeId(string $input): string
+    {
+        $input = trim($input);
+        if (preg_match('/[?&]v=([a-zA-Z0-9_-]{11})/', $input, $m)) return $m[1];
+        if (preg_match('#youtu\.be/([a-zA-Z0-9_-]{11})#', $input, $m)) return $m[1];
+        if (preg_match('#/embed/([a-zA-Z0-9_-]{11})#', $input, $m)) return $m[1];
+        return $input;
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'           => ['required', 'string', 'max:255'],
-            'category_id'    => ['required', 'exists:categories,id'],
-            'subcategory'    => ['nullable', 'string', 'max:100'],
-            'price'          => ['required', 'numeric', 'min:0'],
-            'original_price' => ['nullable', 'numeric', 'min:0'],
-            'description'    => ['nullable', 'string'],
-            'badge'          => ['nullable', 'string', 'max:50'],
-            'details'        => ['nullable', 'array'],
-            'care'           => ['nullable', 'string'],
-            'fit'            => ['nullable', 'string'],
-            'colors'         => ['nullable', 'array'],
-            'sizes'          => ['nullable', 'array'],
-            'tags'           => ['nullable', 'array'],
-            'color1'         => ['nullable', 'string'],
-            'color2'         => ['nullable', 'string'],
-            'icon_class'     => ['nullable', 'string'],
-            'icon_color'     => ['nullable', 'string'],
-            'in_stock'       => ['boolean'],
-            'images'         => ['nullable', 'array', 'max:8'],
-            'images.*'       => ['image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+            'name'             => ['required', 'string', 'max:255'],
+            'category_id'      => ['required', 'exists:categories,id'],
+            'subcategory'      => ['nullable', 'string', 'max:100'],
+            'price'            => ['required', 'numeric', 'min:0'],
+            'original_price'   => ['nullable', 'numeric', 'min:0'],
+            'description'      => ['nullable', 'string'],
+            'long_description' => ['nullable', 'string'],
+            'youtube_video_id' => ['nullable', 'string', 'max:255'],
+            'badge'            => ['nullable', 'string', 'max:50'],
+            'details'          => ['nullable', 'array'],
+            'care'             => ['nullable', 'string'],
+            'fit'              => ['nullable', 'string'],
+            'colors'           => ['nullable', 'array'],
+            'sizes'            => ['nullable', 'array'],
+            'tags'             => ['nullable', 'array'],
+            'color1'           => ['nullable', 'string'],
+            'color2'           => ['nullable', 'string'],
+            'icon_class'       => ['nullable', 'string'],
+            'icon_color'       => ['nullable', 'string'],
+            'in_stock'         => ['boolean'],
+            'images'           => ['nullable', 'array', 'max:8'],
+            'images.*'         => ['image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
         ]);
+
+        if (!empty($data['youtube_video_id'])) {
+            $data['youtube_video_id'] = self::extractYoutubeId($data['youtube_video_id']);
+        }
 
         $slug = Str::slug($data['name']);
         $original = $slug;
@@ -106,25 +121,31 @@ class SellerProductController extends Controller
         abort_if($product->seller_id !== $request->user()->id, 403);
 
         $data = $request->validate([
-            'name'           => ['sometimes', 'required', 'string', 'max:255'],
-            'category_id'    => ['sometimes', 'required', 'exists:categories,id'],
-            'subcategory'    => ['nullable', 'string', 'max:100'],
-            'price'          => ['sometimes', 'required', 'numeric', 'min:0'],
-            'original_price' => ['nullable', 'numeric', 'min:0'],
-            'description'    => ['nullable', 'string'],
-            'badge'          => ['nullable', 'string', 'max:50'],
-            'details'        => ['nullable', 'array'],
-            'care'           => ['nullable', 'string'],
-            'fit'            => ['nullable', 'string'],
-            'colors'         => ['nullable', 'array'],
-            'sizes'          => ['nullable', 'array'],
-            'tags'           => ['nullable', 'array'],
-            'color1'         => ['nullable', 'string'],
-            'color2'         => ['nullable', 'string'],
-            'icon_class'     => ['nullable', 'string'],
-            'icon_color'     => ['nullable', 'string'],
-            'in_stock'       => ['boolean'],
+            'name'             => ['sometimes', 'required', 'string', 'max:255'],
+            'category_id'      => ['sometimes', 'required', 'exists:categories,id'],
+            'subcategory'      => ['nullable', 'string', 'max:100'],
+            'price'            => ['sometimes', 'required', 'numeric', 'min:0'],
+            'original_price'   => ['nullable', 'numeric', 'min:0'],
+            'description'      => ['nullable', 'string'],
+            'long_description' => ['nullable', 'string'],
+            'youtube_video_id' => ['nullable', 'string', 'max:255'],
+            'badge'            => ['nullable', 'string', 'max:50'],
+            'details'          => ['nullable', 'array'],
+            'care'             => ['nullable', 'string'],
+            'fit'              => ['nullable', 'string'],
+            'colors'           => ['nullable', 'array'],
+            'sizes'            => ['nullable', 'array'],
+            'tags'             => ['nullable', 'array'],
+            'color1'           => ['nullable', 'string'],
+            'color2'           => ['nullable', 'string'],
+            'icon_class'       => ['nullable', 'string'],
+            'icon_color'       => ['nullable', 'string'],
+            'in_stock'         => ['boolean'],
         ]);
+
+        if (!empty($data['youtube_video_id'])) {
+            $data['youtube_video_id'] = self::extractYoutubeId($data['youtube_video_id']);
+        }
 
         $product->update($data);
         $product->load(['category', 'media']);

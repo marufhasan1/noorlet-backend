@@ -38,6 +38,7 @@ class OrderController extends Controller
             'items.*.size'     => ['nullable', 'string'],
             'items.*.color'    => ['nullable', 'string'],
             'shipping_address' => ['required', 'string'],
+            'payment_method'   => ['nullable', 'in:card,cod'],
         ]);
 
         $subtotal = 0;
@@ -63,11 +64,12 @@ class OrderController extends Controller
 
         $order = $request->user()->orders()->create([
             'order_number'     => 'LX-' . strtoupper(Str::random(6)),
-            'status'           => 'processing',
+            'status'           => 'pending',
             'subtotal'         => $subtotal,
             'shipping'         => $shipping,
             'total'            => $total,
             'shipping_address' => $data['shipping_address'],
+            'payment_method'   => $data['payment_method'] ?? 'card',
         ]);
 
         $order->items()->createMany($orderItems);

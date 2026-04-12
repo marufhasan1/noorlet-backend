@@ -26,6 +26,7 @@ class AdminSettingsController extends Controller
             'announcement_text'      => ['sometimes', 'string', 'max:20'],
             'announcement_messages'  => ['sometimes', 'string'],
             'hero_settings'          => ['sometimes', 'string'],
+            'promo_banner_settings'  => ['sometimes', 'string'],
         ]);
 
         foreach ($data as $key => $value) {
